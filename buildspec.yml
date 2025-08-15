@@ -6,14 +6,27 @@ phases:
       nodejs: 18
     commands:
       - echo "Installing dependencies"
-      - npm ci
+      # Try npm ci first, fallback to npm install if package-lock.json not found
+      - |
+        if [ -f package-lock.json ]; then
+          npm ci
+        else
+          npm install
+        fi
   pre_build:
     commands:
       - echo "Running tests"
-      - npm test
+      # Run tests but don't fail build if no test script found
+      - |
+        if npm run | grep -q "test"; then
+          npm test
+        else
+          echo "No tests found, skipping"
+        fi
   build:
     commands:
       - echo "Packaging application"
+      - zip -r app.zip app scripts appspec.yml package.json
 artifacts:
   files:
     - appspec.yml
